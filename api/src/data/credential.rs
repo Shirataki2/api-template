@@ -8,7 +8,7 @@ pub struct Token {
 }
 
 pub fn authorize(session: &Session) -> Result<Token, AppError> {
-    let access_token  = match session.get::<String>("access_token")? {
+    let access_token = match session.get::<String>("access_token")? {
         Some(access_token) => access_token,
         None => return Err(AppError::Unauthorized("Token is missing".to_string())),
     };
@@ -16,5 +16,8 @@ pub fn authorize(session: &Session) -> Result<Token, AppError> {
         Some(refresh_token) => refresh_token,
         None => return Err(AppError::Unauthorized("Token is missing".to_string())),
     };
-    Ok(Token { access_token, refresh_token})
+    Ok(Token {
+        access_token,
+        refresh_token,
+    })
 }

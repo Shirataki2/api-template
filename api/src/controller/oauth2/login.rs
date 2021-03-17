@@ -1,8 +1,7 @@
 use crate::{data::OauthClient, error::AppError};
 use actix_session::Session;
-use actix_web::{get, http::header, web, HttpResponse};
+use actix_web::{http::header, web, HttpResponse};
 
-#[get("/auth/login")]
 pub(crate) async fn login(
     session: Session,
     oauth: web::Data<OauthClient>,

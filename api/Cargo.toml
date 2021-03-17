@@ -11,32 +11,38 @@ name = "serve"
 path = "src/bin/serve.rs"
 
 [dependencies]
+# Actix-web v3 only support Tokio v0.2
 actix-web = { version = "3.3" }
 anyhow = "1.0"
 dotenv = "0.15"
-env_logger = "0.8"
+pretty_env_logger = "0.4"
 log = "0.4"
 thiserror = "1.0"
 oauth2 = { version = "3.0", default-features = false, features = ["futures-03", "reqwest-010"] }
 actix-session = "0.4.0"
+# Because of Tokio v0.2
+actix-rt = "1.1"
 actix-redis = "0.9.1"
 actix-identity = "0.3.1"
+actix-ratelimit = "0.3"
 derive_builder = "0.9.0"
 urlencoding = "1"
 futures = "0.3"
 serde = { version = "1", features = ["derive"] }
 strum = "0.20"
 strum_macros = "0.20"
-# Tokio v0.2
+# Because of Tokio v0.2
 reqwest = "0.10"
 tokio-compat-02 = "0.2"
+async-trait = "0.1"
 
-# Tokio v0.2
+# Because of Tokio v0.2
 [dependencies.sqlx]
 version = "0.3"
 default-features = false
 features = [
     "runtime-tokio",
+    "macros",
     "postgres",
     "chrono",
 ]

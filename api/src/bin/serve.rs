@@ -1,9 +1,8 @@
 #[macro_use]
 extern crate log;
 
-// use actix_redis::RedisSession;
 use actix_session::CookieSession;
-use actix_web::{get, middleware::Logger, App, HttpResponse, HttpServer, Responder};
+use actix_web::{middleware::Logger, App, HttpServer};
 use anyhow::Result;
 use dotenv::dotenv;
 use sqlx::PgPool;
@@ -11,18 +10,13 @@ use std::{env, ops::Deref};
 
 use discord_api::{
     controller::set_routes,
-    data::{DiscordOauthProviderBuilder, DiscordOauthScope, OauthClient, HttpClient},
+    data::{DiscordOauthProviderBuilder, DiscordOauthScope, HttpClient, OauthClient},
 };
-
-#[get("/")]
-async fn index() -> impl Responder {
-    HttpResponse::Ok().body("it works!")
-}
 
 #[actix_web::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-    env_logger::init();
+    pretty_env_logger::init();
 
     // ** LOAD CONFIG ** //
 
@@ -36,7 +30,7 @@ async fn main() -> Result<()> {
     let host = env::var("HOST").unwrap_or(String::from("0.0.0.0"));
     let port = env::var("PORT").unwrap_or(String::from("4040"));
 
-    // let redis_host = env::var("REDIS_HOST").expect("REDIS_HOST is not set.");
+    let redis_host = env::var("REDIS_HOST").expect("REDIS_HOST is not set.");
     let session_key = env::var("SESSION_KEY").expect("SESSION_KEY is not set");
 
     let client_id = env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID is not set");
@@ -70,8 +64,7 @@ async fn main() -> Result<()> {
             .wrap(Logger::default())
             // .wrap(RedisSession::new(&redis_host, session_key.deref().as_bytes()))
             .wrap(CookieSession::signed(session_key.deref().as_bytes()).secure(false))
-            .service(index)
-            .configure(set_routes)
+            .configure(|c| set_routes(c, &redis_host))
     })
     .bind(format!("{}:{}", host, port))
     .expect("Failed to bind server")

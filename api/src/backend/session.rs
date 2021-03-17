@@ -1,8 +1,8 @@
-use std::rc::Rc;
 use actix_identity::IdentityPolicy;
 use actix_session::UserSession;
 use actix_web::Error;
 use futures::future::{ready, Ready};
+use std::rc::Rc;
 
 struct SessionIdentityInner {
     key: String,
@@ -12,7 +12,9 @@ pub struct SessionIdentiyPolicy(Rc<SessionIdentityInner>);
 
 impl SessionIdentiyPolicy {
     pub fn new() -> SessionIdentiyPolicy {
-        SessionIdentiyPolicy(Rc::new(SessionIdentityInner { key: "Identity".to_string()}))
+        SessionIdentiyPolicy(Rc::new(SessionIdentityInner {
+            key: "Identity".to_string(),
+        }))
     }
 
     pub fn key(mut self, value: &str) -> SessionIdentiyPolicy {

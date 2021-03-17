@@ -1,27 +1,30 @@
-use thiserror::Error;
+use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use serde::Serialize;
-use actix_web::{HttpResponse, http::StatusCode, ResponseError};
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("Requested Resource is Not Found")]
     NotFound,
-    #[error("Error occurred during authentication.")]
+    #[error("Your Method is not allowed")]
+    MethodNotAllowed,
+    #[error("Error occurred during authentication")]
     AuthorizationServerError,
-    #[error("Unexpected error has occurred.")]
+    #[error("Unexpected error has occurred")]
     InternalServerError,
-    #[error("Failed to read tokens from server.")]
+    #[error("Failed to read tokens from server")]
     TokenRegistrationError,
     #[error("{0}")]
     Unauthorized(String),
-    #[error("An error has occurred while communicating with Discord.")]
-    SerenityError(#[from] serenity::Error)
+    #[error("Discord returned an error")]
+    SerenityError(#[from] serenity::Error),
 }
 
 impl AppError {
     pub fn name(&self) -> String {
         let err = match *self {
             Self::NotFound => "Not Found",
+            Self::MethodNotAllowed => "Method Not Allowed",
             Self::AuthorizationServerError => "Internal Server Error",
             Self::InternalServerError => "Internal Server Error",
             Self::TokenRegistrationError => "Internal Server Error",
@@ -41,13 +44,20 @@ struct ErrorResponse {
 
 impl ResponseError for AppError {
     fn status_code(&self) -> StatusCode {
-        match *self {
+        match self {
             Self::NotFound => StatusCode::NOT_FOUND,
+            Self::MethodNotAllowed => StatusCode::METHOD_NOT_ALLOWED,
             Self::AuthorizationServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::TokenRegistrationError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::Unauthorized(_) => StatusCode::UNAUTHORIZED,
-            Self::SerenityError(_) => StatusCode::SERVICE_UNAVAILABLE,
+            Self::SerenityError(e) => {
+                use serenity::Error::*;
+                match e {
+                    Http(e) => e.status_code().unwrap_or(StatusCode::SERVICE_UNAVAILABLE),
+                    _ => StatusCode::SERVICE_UNAVAILABLE,
+                }
+            }
         }
     }
 
@@ -69,3 +79,15 @@ impl From<actix_web::Error> for AppError {
     }
 }
 
+impl From<sqlx::Error> for AppError {
+    fn from(err: sqlx::Error) -> AppError {
+        use sqlx::Error::*;
+        match err {
+            RowNotFound => AppError::NotFound,
+            e => {
+                error!("Database Error:\n{:#?}", e);
+                AppError::InternalServerError
+            }
+        }
+    }
+}

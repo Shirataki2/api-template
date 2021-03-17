@@ -1,5 +1,8 @@
 use derive_builder::Builder;
-use oauth2::{AuthUrl, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge, PkceCodeVerifier, RedirectUrl, TokenUrl, basic::BasicClient};
+use oauth2::{
+    basic::BasicClient, AuthUrl, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge,
+    PkceCodeVerifier, RedirectUrl, TokenUrl,
+};
 use urlencoding::encode;
 
 #[derive(Debug, Clone)]

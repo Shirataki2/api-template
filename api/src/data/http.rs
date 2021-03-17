@@ -10,7 +10,9 @@ pub struct HttpClient {
 
 impl HttpClient {
     pub fn new() -> HttpClient {
-        let client = Client::builder().build().expect("Failed to build reqwest client");
+        let client = Client::builder()
+            .build()
+            .expect("Failed to build reqwest client");
         HttpClient { client }
     }
 
