@@ -1,9 +1,7 @@
 use super::operations::Response;
-use crate::common::{t, slash::extract_option};
+use crate::common::{slash::extract_option, t};
 use serenity::model::{
-    channel::GuildChannel,
-    id::UserId,
-    interactions::ApplicationCommandInteractionData,
+    channel::GuildChannel, id::UserId, interactions::ApplicationCommandInteractionData,
 };
 pub async fn help(
     _ctx: &serenity::client::Context,

@@ -1,9 +1,9 @@
-use self::{invite::*, ping::*, down::*};
+use self::{down::*, invite::*, ping::*};
 use serenity::framework::standard::macros::group;
 
+pub mod down;
 pub mod invite;
 pub mod ping;
-pub mod down;
 
 #[group]
 #[commands(invite, ping, down)]

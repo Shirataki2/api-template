@@ -16,7 +16,7 @@ use songbird::{
     SerenityInit, Songbird,
 };
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 8)]
+#[tokio::main]
 async fn main() {
     dotenv().ok();
     pretty_env_logger::init();
@@ -25,7 +25,6 @@ async fn main() {
     let http = Http::new_with_token(&token);
 
     let pg_url = env::var("DATABASE_URL").expect("Missing DATABASE_URL");
-
 
     // ** Get Owner Info ** //
 
@@ -81,7 +80,6 @@ async fn main() {
     {
         let pool = data::create_pool(&pg_url).await;
 
-
         let mut data = client.data.write().await;
 
         data.insert::<data::DatabasePool>(pool);
@@ -97,7 +95,6 @@ async fn main() {
             .expect("Failed to register CTRL + C handler");
         shard_manager.lock().await.shutdown_all().await;
     });
-
 
     info!("Application Start");
 

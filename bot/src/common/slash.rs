@@ -11,9 +11,17 @@ pub fn extract_option(data: &ApplicationCommandInteractionData, default: String)
         match arg {
             String(s) => s,
             Null => "".to_string(),
-            Bool(b) => if b { "true".to_string() } else { "false".to_string() }
-            Number(n) => { format!("{}", n) }
-            v => v.to_string()
+            Bool(b) => {
+                if b {
+                    "true".to_string()
+                } else {
+                    "false".to_string()
+                }
+            }
+            Number(n) => {
+                format!("{}", n)
+            }
+            v => v.to_string(),
         }
     } else {
         default

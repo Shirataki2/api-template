@@ -1,4 +1,8 @@
-use serenity::{client::{Context, bridge::gateway::ShardId}, framework::standard::{macros::command, CommandResult}, model::channel::Message};
+use serenity::{
+    client::{bridge::gateway::ShardId, Context},
+    framework::standard::{macros::command, CommandResult},
+    model::channel::Message,
+};
 
 use crate::{data::ShardManagerContainer, reply};
 

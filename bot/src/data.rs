@@ -1,5 +1,5 @@
 use serenity::{client::bridge::gateway::ShardManager, prelude::Mutex, prelude::TypeMapKey};
-use sqlx::{PgPool, postgres::PgPoolOptions};
+use sqlx::PgPool;
 use std::sync::Arc;
 
 pub struct ShardManagerContainer;
@@ -15,9 +15,5 @@ impl TypeMapKey for DatabasePool {
 }
 
 pub async fn create_pool(pg_url: &str) -> PgPool {
-    PgPoolOptions::new()
-        .max_connections(10)
-        .connect(pg_url)
-        .await
-        .unwrap()
+    PgPool::builder().max_size(5).build(pg_url).await.unwrap()
 }

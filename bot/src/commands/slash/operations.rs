@@ -1,6 +1,8 @@
 use super::help::help;
 use serde_json::Value;
-use serenity::model::{channel::GuildChannel, id::UserId, interactions::ApplicationCommandInteractionData};
+use serenity::model::{
+    channel::GuildChannel, id::UserId, interactions::ApplicationCommandInteractionData,
+};
 
 #[derive(Debug, Default)]
 /// # Note

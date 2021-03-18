@@ -1,4 +1,8 @@
-use serenity::{client::Context, framework::standard::{macros::command, CommandResult}, model::channel::Message};
+use serenity::{
+    client::Context,
+    framework::standard::{macros::command, CommandResult},
+    model::channel::Message,
+};
 
 use crate::{data::ShardManagerContainer, reply};
 
