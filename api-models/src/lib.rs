@@ -17,20 +17,20 @@ pub trait CreateModel: Sized + GetModel {
     type CreateSchema: Send + Sync;
     async fn create(pool: &sqlx::PgPool, payload: Self::CreateSchema) -> Result<(), sqlx::Error>;
 
-    async fn checked_create(pool: &sqlx::PgPool, key: &Self::Pk, payload: Self::CreateSchema) -> Result<Self, sqlx::Error> {
+    async fn checked_create(
+        pool: &sqlx::PgPool,
+        key: &Self::Pk,
+        payload: Self::CreateSchema,
+    ) -> Result<Self, sqlx::Error> {
         match Self::get(pool, key).await {
             Ok(data) => Ok(data),
             Err(e) => match e {
-                sqlx::Error::RowNotFound => {
-                    match Self::create(pool, payload).await {
-                        Ok(()) => {
-                            Self::get(pool, key).await
-                        }
-                        Err(e) => Err(e)
-                    }
-                }
-                e => Err(e)
-            }
+                sqlx::Error::RowNotFound => match Self::create(pool, payload).await {
+                    Ok(()) => Self::get(pool, key).await,
+                    Err(e) => Err(e),
+                },
+                e => Err(e),
+            },
         }
     }
 }
@@ -38,7 +38,11 @@ pub trait CreateModel: Sized + GetModel {
 #[async_trait]
 pub trait UpdateModel: Sized + GetModel + CreateModel {
     type UpdateSchema: Send + Sync;
-    async fn update(pool: &sqlx::PgPool, key: &Self::Pk, payload: Self::UpdateSchema) -> Result<(), sqlx::Error>;
+    async fn update(
+        pool: &sqlx::PgPool,
+        key: &Self::Pk,
+        payload: Self::UpdateSchema,
+    ) -> Result<(), sqlx::Error>;
 }
 
 #[async_trait]

@@ -1,14 +1,14 @@
 use super::*;
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use derive_builder::Builder;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Builder)]
 pub struct Guild {
     id: i64,
     name: String,
     icon_url: String,
-locale: String,
+    locale: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Builder)]
@@ -49,7 +49,11 @@ impl CreateModel for Guild {
 #[async_trait]
 impl UpdateModel for Guild {
     type UpdateSchema = GuildUpdate;
-    async fn update(pool: &sqlx::PgPool, id: &i64, payload: Self::UpdateSchema) -> Result<(), sqlx::Error> {
+    async fn update(
+        pool: &sqlx::PgPool,
+        id: &i64,
+        payload: Self::UpdateSchema,
+    ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "UPDATE guild SET name = $2, icon_url = $3, locale = $4 WHERE id = $1",
             *id,
