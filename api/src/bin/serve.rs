@@ -8,7 +8,7 @@ use dotenv::dotenv;
 use sqlx::PgPool;
 use std::{env, ops::Deref};
 
-use discord_api::{
+use api::{
     controller::set_routes,
     data::{DiscordOauthProviderBuilder, DiscordOauthScope, HttpClient, OauthClient},
 };

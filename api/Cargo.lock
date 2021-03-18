@@ -459,6 +459,49 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "afddf7f520a80dbf76e6f50a35bca42a2331ef227a28b3b6dc5c2e2338d114b1"
 
 [[package]]
+name = "api"
+version = "0.1.0"
+dependencies = [
+ "actix-identity",
+ "actix-ratelimit",
+ "actix-redis",
+ "actix-rt",
+ "actix-session",
+ "actix-web",
+ "anyhow",
+ "api-models",
+ "async-trait",
+ "derive_builder",
+ "dotenv",
+ "futures",
+ "log",
+ "oauth2",
+ "pretty_env_logger",
+ "reqwest",
+ "serde",
+ "serenity",
+ "sqlx",
+ "strum",
+ "strum_macros",
+ "thiserror",
+ "tokio-compat-02",
+ "urlencoding",
+]
+
+[[package]]
+name = "api-models"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "async-trait",
+ "derive_builder",
+ "dotenv",
+ "serde",
+ "sqlx",
+ "tokio 0.2.25",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1015,35 +1058,6 @@ name = "discard"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
-
-[[package]]
-name = "discord-api"
-version = "0.1.0"
-dependencies = [
- "actix-identity",
- "actix-ratelimit",
- "actix-redis",
- "actix-rt",
- "actix-session",
- "actix-web",
- "anyhow",
- "async-trait",
- "derive_builder",
- "dotenv",
- "futures",
- "log",
- "oauth2",
- "pretty_env_logger",
- "reqwest",
- "serde",
- "serenity",
- "sqlx",
- "strum",
- "strum_macros",
- "thiserror",
- "tokio-compat-02",
- "urlencoding",
-]
 
 [[package]]
 name = "dotenv"

@@ -1,5 +1,5 @@
 [package]
-name = "discord-api"
+name = "api"
 version = "0.1.0"
 authors = ["Tomoya Ishii <shi2gx@gmail.com>"]
 edition = "2018"
@@ -55,3 +55,6 @@ features = [
     "model",
     "rustls_tokio_0_2_backend",
 ]
+
+[dependencies.api-models]
+path = "../api-models"

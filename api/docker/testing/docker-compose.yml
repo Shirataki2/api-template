@@ -17,3 +17,4 @@ services:
       - ../..:/app
       - ./.env:/app/.env
       - /tmp/.cargo/target:/tmp/target
+      - ~/.cargo/registry:/root/.cargo/registry

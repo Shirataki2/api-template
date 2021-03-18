@@ -1,11 +1,10 @@
+[env.release]
+CARGO_RELEASE_ARG = "--release"
+
+
 [config]
 skip_core_tasks = true
 
-[tasks.test]
-script = """
-set -x
-cd docker/testing
-docker-compose up -d postgres
-docker-compose up --abort-on-container-exit api
-docker-compose down
-"""
+[tasks.serve]
+command = "cargo"
+args = ["run", "--bin", "serve", "@@split(CARGO_RELEASE_ARG, )"]
