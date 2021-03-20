@@ -2,7 +2,6 @@ use crate::{error::TtsError, TtsEngine};
 use core::str;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::{
-    fs::File,
     io::Write,
     iter,
     path::{Path, PathBuf},
@@ -12,7 +11,7 @@ use tempfile::NamedTempFile;
 use async_trait::async_trait;
 
 pub struct OpenJTalk {
-    config: OpenJTalkConfig,
+    pub config: OpenJTalkConfig,
 }
 
 #[async_trait]
@@ -24,7 +23,7 @@ impl TtsEngine for OpenJTalk {
         Ok(Self { config })
     }
 
-    async fn save(&self, text: &str) -> Result<File, TtsError> {
+    async fn save(&self, text: &str) -> Result<String, TtsError> {
         let mut input_file = NamedTempFile::new()?;
         let output_file = NamedTempFile::new()?;
         input_file.write(text.as_bytes())?;
@@ -37,8 +36,8 @@ impl TtsEngine for OpenJTalk {
             .take(32)
             .collect();
 
-        let file = output_file.persist(format!("{}.wav", filename))?;
-        Ok(file)
+        output_file.persist(format!("{}.wav", filename))?;
+        Ok(format!("{}.wav", filename))
     }
 }
 

@@ -12,4 +12,6 @@ pub enum TtsError {
     ReqwestError(#[from] reqwest::Error),
     #[error("{0}")]
     DecodeError(#[from] base64::DecodeError),
+    #[error("{0}")]
+    OAuth2Error(#[from] yup_oauth2::Error),
 }

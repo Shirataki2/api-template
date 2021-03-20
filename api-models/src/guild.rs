@@ -5,10 +5,23 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize, Builder)]
 pub struct Guild {
-    id: i64,
-    name: String,
-    icon_url: String,
-    locale: String,
+    pub id: i64,
+    pub name: String,
+    pub icon_url: String,
+    pub locale: String,
+}
+
+impl Guild {
+    pub async fn set_locale(
+        pool: &sqlx::PgPool,
+        id: &i64,
+        locale: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!("UPDATE guild SET locale = $2 WHERE id = $1", *id, locale)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Builder)]

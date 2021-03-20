@@ -5,7 +5,6 @@ require('dotenv').config()
 console.info(`This is ${process.env.BUILD} Build`)
 
 export default {
-  // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     titleTemplate: '%s - discord-bot-web',
     title: 'discord-bot-web',
@@ -15,36 +14,24 @@ export default {
       { hid: 'description', name: 'description', content: '' },
     ],
     link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    script: [{ src: 'https://js.stripe.com/v3/' }],
   },
 
-  // Global CSS: https://go.nuxtjs.dev/config-css
   css: [],
 
-  // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [],
 
-  // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
 
-  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
-  buildModules: [
-    '@nuxtjs/dotenv',
-    // https://go.nuxtjs.dev/typescript
-    '@nuxt/typescript-build',
-    // https://go.nuxtjs.dev/vuetify
-    '@nuxtjs/vuetify',
-  ],
+  buildModules: ['@nuxtjs/dotenv', '@nuxt/typescript-build', '@nuxtjs/vuetify'],
 
-  // Modules: https://go.nuxtjs.dev/config-modules
   modules: [
     '@nuxt/content',
-    // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
-    // https://go.nuxtjs.dev/pwa
     '@nuxtjs/pwa',
+    'nuxt-stripe-module',
   ],
 
-  // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
     proxy: true,
   },
@@ -54,16 +41,23 @@ export default {
       target: process.env.API_ENDPOINT,
       pathRewrite: { '^/api/': '' },
     },
+    '/pay/': {
+      target: process.env.STRIPE_ENDPOINT,
+      pathRewrite: { '^/pay/': '' },
+    },
   },
 
-  // PWA module configuration: https://go.nuxtjs.dev/pwa
   pwa: {
     manifest: {
       lang: 'en',
     },
   },
 
-  // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify
+  stripe: {
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    apiVersion: '2020-08-27',
+  },
+
   vuetify: {
     customVariables: ['~/assets/variables.scss'],
     theme: {
@@ -82,6 +76,5 @@ export default {
     },
   },
 
-  // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {},
 }

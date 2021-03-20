@@ -25,10 +25,11 @@ pub fn set_routes(cfg: &mut web::ServiceConfig, redis_addr: &str) {
     let store = RedisStore::connect(redis_addr);
     cfg.service(
         scope("/")
-            .service(web::resource("/").route(web::get().to(index)))
+            .app_data(web::PathConfig::default().error_handler(|_, _| AppError::NotFound.into()))
+            .service(resource("").route(web::get().to(index)))
             .service(
                 scope("auth")
-                    .service(resource("/").route(web::get().to(oauth2::auth::auth)))
+                    .service(resource("redirect").route(web::get().to(oauth2::auth::auth)))
                     .service(resource("login").route(web::get().to(oauth2::login::login)))
                     .service(resource("logout").route(web::get().to(oauth2::logout::logout))),
             )

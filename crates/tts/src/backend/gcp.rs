@@ -1,4 +1,8 @@
-use std::{io::Write, iter};
+use std::{
+    io::Write,
+    iter,
+    path::{Path, PathBuf},
+};
 
 use crate::{error::TtsError, TtsEngine};
 use async_trait::async_trait;
@@ -6,9 +10,46 @@ use enum_product::enum_product;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::Client;
 use tempfile::NamedTempFile;
+use yup_oauth2 as oauth;
 
+#[derive(Clone, Debug)]
+pub struct GcpToken(String, PathBuf);
+
+impl GcpToken {
+    pub async fn issue<P: AsRef<Path>>(cert_path: P) -> Result<Self, TtsError> {
+        let key = oauth::read_service_account_key(cert_path.as_ref()).await?;
+        let authenticator = oauth::ServiceAccountAuthenticator::builder(key)
+            .build()
+            .await?;
+        let token = authenticator
+            .token(&["https://www.googleapis.com/auth/cloud-platform"])
+            .await?;
+        Ok(Self(
+            token.as_str().to_string(),
+            cert_path.as_ref().to_path_buf(),
+        ))
+    }
+
+    pub fn show(&self) -> String {
+        self.0.clone()
+    }
+
+    pub async fn renew_token(&mut self) -> Result<(), TtsError> {
+        let key = oauth::read_service_account_key(&self.1).await?;
+        let authenticator = oauth::ServiceAccountAuthenticator::builder(key)
+            .build()
+            .await?;
+        let token = authenticator
+            .token(&["https://www.googleapis.com/auth/cloud-platform"])
+            .await?;
+        self.0 = token.as_str().to_string();
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct GcpTts {
-    config: GcpConfig,
+    pub config: GcpConfig,
 }
 
 #[async_trait]
@@ -19,7 +60,7 @@ impl TtsEngine for GcpTts {
         Ok(Self { config })
     }
 
-    async fn save(&self, text: &str) -> Result<std::fs::File, crate::error::TtsError> {
+    async fn save(&self, text: &str) -> Result<String, crate::error::TtsError> {
         let client = Client::builder().gzip(true).build()?;
         let token = if self.config.access_token.trim().starts_with("Bearer ") {
             self.config.access_token.replace("Bearer ", "")
@@ -27,18 +68,20 @@ impl TtsEngine for GcpTts {
             self.config.access_token.clone()
         };
         let url = "https://texttospeech.googleapis.com/v1/text:synthesize";
-        let body = GcpRequest::new(
-            text.to_string(),
-            self.config.language_code.to_string(),
-            self.config.name.to_string(),
-            self.config.ssml_gender.to_string(),
-            String::from("MP3"),
-        );
+
+        let req = GcpRequest {
+            input: GcpInputRequest {
+                text: text.to_string(),
+            },
+            voice: self.config.voice.clone(),
+            audio_config: self.config.audio_config.clone(),
+        };
+        info!("Request: {:?}", serde_json::to_string(&req));
 
         let buff = client
             .post(url)
             .bearer_auth(token)
-            .json(&body)
+            .json(&req)
             .send()
             .await?
             .json::<GcpResponse>()
@@ -54,64 +97,56 @@ impl TtsEngine for GcpTts {
             .take(32)
             .collect();
 
-        let file = output_file.persist(format!("{}.mp3", filename))?;
+        output_file.persist(format!("{}.mp3", filename))?;
 
-        Ok(file)
+        Ok(format!("{}.mp3", filename))
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct GcpResponse {
-    audio_content: String,
+pub struct GcpResponse {
+    pub audio_content: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct GcpRequest {
-    input: GcpInputRequest,
-    voice: GcpVoiceRequest,
-    audio_config: GcpAudioConfigRequest,
+pub struct GcpRequest {
+    pub input: GcpInputRequest,
+    pub voice: GcpVoiceRequest,
+    pub audio_config: GcpAudioConfigRequest,
 }
 
-impl GcpRequest {
-    fn new(
-        text: String,
-        language_code: String,
-        name: String,
-        ssml_gender: String,
-        audio_encoding: String,
-    ) -> Self {
-        GcpRequest {
-            input: GcpInputRequest { text },
-            voice: GcpVoiceRequest {
-                language_code,
-                name,
-                ssml_gender,
-            },
-            audio_config: GcpAudioConfigRequest { audio_encoding },
-        }
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct GcpInputRequest {
-    text: String,
+pub struct GcpInputRequest {
+    pub text: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct GcpVoiceRequest {
-    language_code: String,
-    name: String,
-    ssml_gender: String,
+pub struct GcpVoiceRequest {
+    pub language_code: String,
+    pub name: String,
+    pub ssml_gender: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct GcpAudioConfigRequest {
-    audio_encoding: String,
+pub struct GcpAudioConfigRequest {
+    pub audio_encoding: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub speaking_rate: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub pitch: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub voice_gain_db: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub sample_rate_hertz: Option<u64>,
 }
 
 impl GcpResponse {
@@ -123,10 +158,23 @@ impl GcpResponse {
 
 #[derive(Clone, Debug)]
 pub struct GcpConfig {
-    access_token: String,
-    language_code: LanguageCode,
-    name: VoiceCode,
-    ssml_gender: GenderCode,
+    pub access_token: String,
+    pub voice: GcpVoiceRequest,
+    pub audio_config: GcpAudioConfigRequest,
+}
+
+impl GcpConfig {
+    pub fn new(
+        token: &str,
+        voice: GcpVoiceRequest,
+        audio_config: GcpAudioConfigRequest,
+    ) -> GcpConfig {
+        Self {
+            access_token: token.to_string(),
+            voice,
+            audio_config,
+        }
+    }
 }
 
 enum_product! {
@@ -184,22 +232,48 @@ mod tests {
     use tokio_compat as tokio;
 
     use super::*;
+    use yup_oauth2 as oauth;
 
     #[tokio::test]
     async fn test_gcp() {
         dotenv::dotenv().ok();
-        let access_token = std::env::var("GCP_ACCESS_TOKEN").unwrap();
-        let config = GcpConfig {
-            access_token,
-            language_code: LanguageCode::JaJP,
-            name: VoiceCode::JaJPWavenetA,
-            ssml_gender: GenderCode::Female,
+        let cert_path = std::env::var("GCP_SERVICE_ACCOUNT_CREDENTIAL_FILE").unwrap();
+        let access_token = GcpToken::issue(cert_path).await.unwrap().show();
+
+        let voice = GcpVoiceRequest {
+            language_code: LanguageCode::JaJP.to_string(),
+            name: VoiceCode::JaJPWavenetA.to_string(),
+            ssml_gender: GenderCode::Female.to_string(),
         };
+
+        let audio_config = GcpAudioConfigRequest {
+            audio_encoding: "MP3".to_string(),
+            ..Default::default()
+        };
+
+        let config = GcpConfig::new(&access_token, voice, audio_config);
+
         let engine = GcpTts::from_config(config).unwrap();
         let file = engine
             .save("効率的で信頼できるソフトウェアを誰もがつくれる言語")
             .await
             .unwrap();
         println!("{:?}", file);
+    }
+
+    #[tokio::test]
+    async fn test_oauth() {
+        dotenv::dotenv().ok();
+        let cert_path = std::env::var("GCP_SERVICE_ACCOUNT_CREDENTIAL_FILE").unwrap();
+        let key = oauth::read_service_account_key(cert_path).await.unwrap();
+        let authenticator = oauth::ServiceAccountAuthenticator::builder(key)
+            .build()
+            .await
+            .unwrap();
+        let token = authenticator
+            .token(&["https://www.googleapis.com/auth/cloud-platform"])
+            .await
+            .unwrap();
+        println!("{:?}", token);
     }
 }

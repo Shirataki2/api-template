@@ -1,13 +1,14 @@
 <template>
-  <v-app-bar app collapse-on-scroll>
+  <v-app-bar app flat>
     <v-app-bar-nav-icon />
     <v-toolbar-title style="cursor: pointer" @click="$router.push('/')">
       <span id="app-title"> DisCalendar v2 </span>
     </v-toolbar-title>
     <v-spacer />
     <template v-if="isLoggedIn">
+      <v-btn class="mr-5" text to="/payment/plans" nuxt>plans</v-btn>
       <AccountMenu>
-        <Avatar class="mr-5" :size="48" />
+        <Avatar :size="48" />
       </AccountMenu>
     </template>
     <template v-else>

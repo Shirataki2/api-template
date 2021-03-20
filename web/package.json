@@ -23,7 +23,10 @@
     "js-cookie": "^2.2.1",
     "json-bigint": "^1.0.0",
     "nuxt": "^2.14.12",
-    "nuxt-property-decorator": "^2.9.1"
+    "nuxt-property-decorator": "^2.9.1",
+    "nuxt-stripe-module": "^3.1.7",
+    "stripe": "^8.138.0",
+    "vue-stripe-elements-plus": "^0.3.2"
   },
   "devDependencies": {
     "@nuxt/types": "^2.14.12",

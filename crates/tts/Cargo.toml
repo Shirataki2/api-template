@@ -5,8 +5,14 @@ authors = ["Tomoya Ishii <shi2gx@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["tokio_02"]
+
+tokio_10 = ["reqwest", "hyper", "hyper-rustls", "yup-oauth2"]
+tokio_02 = ["reqwest-compat", "hyper-compat", "hyper-rustls-compat", "yup-oauth2-compat"]
 
 [dependencies]
+log = "0.4"
 thiserror = "1.0"
 tempfile = "3"
 rand = "0.8"
@@ -21,17 +27,42 @@ features = ["json", "gzip"]
 optional = true
 version = "0.11"
 
-[dependencies.reqwest_compat]
+[dependencies.reqwest-compat]
 features = ["json", "gzip"]
 optional = true
 package = "reqwest"
 version = "0.10"
 
-[features]
-default = ["tokio_02"]
+[dependencies.hyper]
+package = "hyper"
+version = "0.14"
+optional = true
 
-tokio_10 = ["reqwest"]
-tokio_02 = ["reqwest_compat"]
+[dependencies.hyper-compat]
+package = "hyper"
+version = "0.13.10"
+optional = true
+
+[dependencies.yup-oauth2]
+package = "yup-oauth2"
+version = "5"
+optional = true
+
+[dependencies.yup-oauth2-compat]
+package = "yup-oauth2"
+version = "4"
+optional = true
+
+[dependencies.hyper-rustls]
+package = "hyper-rustls"
+version = "0.22"
+optional = true
+
+[dependencies.hyper-rustls-compat]
+package = "hyper-rustls"
+version = "0.21"
+optional = true
+
 
 [dev-dependencies]
 dotenv = "0.15"
@@ -42,7 +73,7 @@ package = "tokio"
 version = "1.3"
 
 
-[dev-dependencies.tokio_compat]
+[dev-dependencies.tokio-compat]
 features = ["macros", "rt-core"]
 package = "tokio"
 version = "0.2"
