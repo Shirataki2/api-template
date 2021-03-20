@@ -1,14 +1,12 @@
 use crate::{error::TtsError, TtsEngine};
+use async_trait::async_trait;
 use core::str;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use std::{
-    io::Write,
-    iter,
-    path::{Path, PathBuf},
+use std::path::{Path, PathBuf};
+use tokio::{
+    fs,
+    io::{AsyncWriteExt, BufWriter},
     process::Command,
 };
-use tempfile::NamedTempFile;
-use async_trait::async_trait;
 
 pub struct OpenJTalk {
     pub config: OpenJTalkConfig,
@@ -24,20 +22,16 @@ impl TtsEngine for OpenJTalk {
     }
 
     async fn save(&self, text: &str) -> Result<String, TtsError> {
-        let mut input_file = NamedTempFile::new()?;
-        let output_file = NamedTempFile::new()?;
-        input_file.write(text.as_bytes())?;
-        self.config.execute(input_file.path(), output_file.path())?;
+        let filename: String = uuid::Uuid::new_v4().to_string();
 
-        let mut rng = thread_rng();
-        let filename: String = iter::repeat(())
-            .map(|_| rng.sample(Alphanumeric))
-            .map(char::from)
-            .take(32)
-            .collect();
-
-        output_file.persist(format!("{}.wav", filename))?;
-        Ok(format!("{}.wav", filename))
+        let input_path = format!("{}.txt", filename);
+        let output_path = format!("{}.wav", filename);
+        let mut input_file = BufWriter::new(fs::File::create(&input_path).await?);
+        input_file.write_all(text.as_bytes()).await?;
+        input_file.flush().await?;
+        self.config.execute(&input_path, &output_path).await?;
+        fs::remove_file(&input_path).await?;
+        Ok(output_path)
     }
 }
 
@@ -75,7 +69,11 @@ impl Default for OpenJTalkConfig {
 }
 
 impl OpenJTalkConfig {
-    pub fn execute<P: AsRef<Path>>(&self, input_path: P, output_path: P) -> Result<(), TtsError> {
+    pub async fn execute<P: AsRef<Path>>(
+        &self,
+        input_path: P,
+        output_path: P,
+    ) -> Result<(), TtsError> {
         let output = Command::new("open_jtalk")
             .arg("-x")
             .arg(&self.dictionary)
@@ -98,7 +96,8 @@ impl OpenJTalkConfig {
             .arg("-ow")
             .arg(output_path.as_ref())
             .arg(input_path.as_ref())
-            .output()?;
+            .output()
+            .await?;
 
         if output.status.success() {
             Ok(())
@@ -115,11 +114,6 @@ impl OpenJTalkConfig {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-
-    #[cfg(all(feature = "tokio_10", not(feature = "tokio_02")))]
-    use tokio;
-    #[cfg(all(feature = "tokio_02", not(feature = "tokio_10")))]
-    use tokio_compat as tokio;
 
     use super::*;
 

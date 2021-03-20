@@ -1,0 +1,10 @@
+[tasks.test-tokio-02]
+command = "cargo"
+args = ["test", "--no-default-features", "--features", "tokio_02"]
+
+[tasks.test-tokio-10]
+command = "cargo"
+args = ["test", "--no-default-features", "--features", "tokio_10"]
+
+[tasks.test-all]
+dependencies = ["test-tokio-02", "test-tokio-10"]

@@ -1,5 +1,4 @@
 use std::{
-    io::Write,
     iter,
     path::{Path, PathBuf},
 };
@@ -9,7 +8,10 @@ use async_trait::async_trait;
 use enum_product::enum_product;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::Client;
-use tempfile::NamedTempFile;
+use tokio::{
+    fs,
+    io::{AsyncWriteExt, BufWriter},
+};
 use yup_oauth2 as oauth;
 
 #[derive(Clone, Debug)]
@@ -85,19 +87,24 @@ impl TtsEngine for GcpTts {
             .send()
             .await?
             .json::<GcpResponse>()
-            .await?
-            .decode()?;
+            .await?;
 
-        let mut output_file = NamedTempFile::new()?;
-        output_file.write_all(&buff)?;
+        let buff = tokio::spawn(async move { base64::decode(buff.audio_content) }).await??;
+
+        let filename: String = uuid::Uuid::new_v4().to_string();
+
+        let output_path = format!("{}.mp3", filename);
+
+        let mut output_file = BufWriter::new(fs::File::create(&output_path).await?);
+
+        output_file.write_all(&buff).await?;
+        output_file.flush().await?;
         let mut rng = thread_rng();
         let filename: String = iter::repeat(())
             .map(|_| rng.sample(Alphanumeric))
             .map(char::from)
             .take(32)
             .collect();
-
-        output_file.persist(format!("{}.mp3", filename))?;
 
         Ok(format!("{}.mp3", filename))
     }
@@ -147,13 +154,6 @@ pub struct GcpAudioConfigRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(default)]
     pub sample_rate_hertz: Option<u64>,
-}
-
-impl GcpResponse {
-    pub fn decode(&self) -> Result<Vec<u8>, TtsError> {
-        let buff = base64::decode(&self.audio_content)?;
-        Ok(buff)
-    }
 }
 
 #[derive(Clone, Debug)]

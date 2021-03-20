@@ -14,4 +14,6 @@ pub enum TtsError {
     DecodeError(#[from] base64::DecodeError),
     #[error("{0}")]
     OAuth2Error(#[from] yup_oauth2::Error),
+    #[error("{0}")]
+    JoinError(#[from] tokio::task::JoinError),
 }

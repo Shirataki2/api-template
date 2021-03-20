@@ -4,6 +4,9 @@ extern crate serde;
 extern crate log;
 
 #[cfg(all(feature = "tokio_02", not(feature = "tokio_10")))]
+extern crate tokio_compat as tokio;
+
+#[cfg(all(feature = "tokio_02", not(feature = "tokio_10")))]
 extern crate reqwest_compat as reqwest;
 
 #[cfg(all(feature = "tokio_02", not(feature = "tokio_10")))]
