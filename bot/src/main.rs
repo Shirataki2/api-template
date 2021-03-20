@@ -3,12 +3,15 @@ extern crate log;
 
 use bot::{commands, data, handler};
 
-use std::{collections::HashSet, env};
+use std::{collections::HashSet, env, sync::Arc};
 
 use dotenv::dotenv;
 
+use redis::Client as RedisClient;
+
 use serenity::{
-    client::bridge::gateway::GatewayIntents, framework::StandardFramework, http::Http, Client,
+    client::bridge::gateway::GatewayIntents, framework::StandardFramework, http::Http,
+    prelude::Mutex, Client,
 };
 
 use songbird::{
@@ -25,6 +28,9 @@ async fn main() {
     let http = Http::new_with_token(&token);
 
     let pg_url = env::var("DATABASE_URL").expect("Missing DATABASE_URL");
+    let redis_url = env::var("REDIS_HOST").expect("Missing REDIS_HOST");
+    let cert_path = env::var("GCP_SERVICE_ACCOUNT_CREDENTIAL_FILE")
+        .expect("Missing GCP_SERVICE_ACCOUNT_CREDENTIAL_FILE");
 
     // ** Get Owner Info ** //
 
@@ -50,7 +56,8 @@ async fn main() {
                 .delimiters(vec![" ", "　"])
                 .case_insensitivity(true)
         })
-        .group(&commands::META_GROUP);
+        .group(&commands::META_GROUP)
+        .group(&commands::TTS_GROUP);
 
     let songbird = Songbird::serenity();
     songbird.set_config(DriverConfig::default().decode_mode(DecodeMode::Decode));
@@ -70,7 +77,7 @@ async fn main() {
     // ** Create Client ** //
 
     let mut client = Client::builder(&token)
-        .event_handler(handler::ClientHandler)
+        .event_handler(handler::ClientHandler::new())
         .framework(framework)
         .intents(intents)
         .register_songbird_with(songbird.into())
@@ -78,10 +85,16 @@ async fn main() {
         .expect("Failed to create discord client");
 
     {
-        let pool = data::create_pool(&pg_url).await;
-
         let mut data = client.data.write().await;
 
+        let pool = data::create_pool(&pg_url).await;
+
+        let redis_client = RedisClient::open(redis_url).unwrap();
+
+        let token = tts::backend::gcp::GcpToken::issue(cert_path).await.unwrap();
+
+        data.insert::<data::RedisConnection>(Arc::new(Mutex::new(redis_client)));
+        data.insert::<data::GcpAccessToken>(Arc::new(Mutex::new(token)));
         data.insert::<data::DatabasePool>(pool);
         data.insert::<data::ShardManagerContainer>(client.shard_manager.clone())
     }

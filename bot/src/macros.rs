@@ -49,3 +49,30 @@ macro_rules! reply_with_ping {
         }
     }}
 }
+
+#[macro_export]
+macro_rules! set_redis {
+    (($ctx:expr, $msg:expr, &guild_id:expr, $locale:expr) => $k:expr, $v:expr) => {{
+        let data = $ctx.data.as_ref().read().await;
+        let con = data.get::<RedisConnection>().unwrap().clone();
+        let con = con.lock().await;
+        let mut con = match con.get_async_connection().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                error!("Failed to get Redis connection; {:?}", e);
+                reply!(($ctx, $msg) => "{}", tt(&$locale, "UnexpectedError"));
+                return Ok(());
+            }
+        };
+        let _: i64 = match con.set(
+            &format!("bot:channel:joined:{}", $guild_id.0),
+            $msg.channel_id.0,
+        ).await {
+            Ok(c) => c,
+            Err(e) => {
+                error!("Failed to set redis; {:?}", e);
+                return Ok(());
+            }
+        };
+    }}
+}

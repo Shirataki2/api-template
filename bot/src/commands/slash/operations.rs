@@ -1,4 +1,4 @@
-use super::help::help;
+use super::lang::lang;
 use serde_json::Value;
 use serenity::model::{
     channel::GuildChannel, id::UserId, interactions::ApplicationCommandInteractionData,
@@ -15,7 +15,7 @@ pub struct Response {
 }
 
 pub enum Operation {
-    I18n,
+    Lang,
 }
 
 impl Operation {
@@ -27,7 +27,7 @@ impl Operation {
         text_channel: &GuildChannel,
     ) -> anyhow::Result<Option<Response>> {
         let out = match self {
-            Operation::I18n => help(ctx, data, user_id, text_channel).await?,
+            Operation::Lang => lang(ctx, data, user_id, text_channel).await?,
         };
         Ok(out)
     }

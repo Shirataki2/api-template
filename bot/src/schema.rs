@@ -3,13 +3,14 @@ use serde_json::{json, Value};
 
 lazy_static! {
     pub static ref SLASH_COMMANDS: Vec<Value> = vec![json!({
-        "name": "i18n",
-        "description": "i18n test",
+        "name": "lang",
+        "description": "Change Bot Language",
         "options": [
             {
                 "name": "lang",
                 "description": "Language",
                 "type": 3,
+                "required": true,
                 "choices": [
                     {
                         "name": "Japanese",

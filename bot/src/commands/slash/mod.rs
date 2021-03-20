@@ -1,4 +1,4 @@
-pub mod help;
+pub mod lang;
 pub mod operations;
 
 use self::operations::Operation;
@@ -21,7 +21,7 @@ pub async fn handle_slash_command(
         eprintln!("{:?}", data);
 
         let op = match data.name.as_str() {
-            "i18n" => Operation::I18n,
+            "lang" => Operation::Lang,
             _ => bail!("unknown command"),
         };
 

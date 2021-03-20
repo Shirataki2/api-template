@@ -7,5 +7,7 @@ pub mod commands;
 pub mod common;
 pub mod data;
 pub mod handler;
-mod macros;
 pub mod schema;
+pub mod tasks;
+#[macro_use]
+mod macros;
