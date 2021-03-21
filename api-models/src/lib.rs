@@ -1,4 +1,5 @@
 pub mod guild;
+pub mod events;
 use async_trait::async_trait;
 
 #[async_trait]

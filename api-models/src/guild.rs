@@ -3,12 +3,13 @@ use async_trait::async_trait;
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize, Builder)]
+#[derive(Clone, Debug, Serialize, Deserialize, Builder)]
 pub struct Guild {
     pub id: i64,
     pub name: String,
     pub icon_url: String,
     pub locale: String,
+    pub voice_model: String,
 }
 
 impl Guild {
@@ -22,13 +23,25 @@ impl Guild {
             .await?;
         Ok(())
     }
+
+    pub async fn set_voice(
+        pool: &sqlx::PgPool,
+        id: &i64,
+        voice: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!("UPDATE guild SET voice_model = $2 WHERE id = $1", *id, voice)
+            .execute(pool)
+            .await?;
+        Ok(())
+    }
 }
 
-#[derive(Debug, Deserialize, Serialize, Builder)]
+#[derive(Clone, Debug, Serialize, Deserialize, Builder)]
 pub struct GuildUpdate {
     name: String,
     icon_url: String,
     locale: String,
+    voice_model: String,
 }
 
 #[async_trait]
@@ -47,11 +60,12 @@ impl CreateModel for Guild {
     type CreateSchema = Self;
     async fn create(pool: &sqlx::PgPool, payload: Self::CreateSchema) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "INSERT INTO guild (id, name, icon_url, locale) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO guild (id, name, icon_url, locale, voice_model) VALUES ($1, $2, $3, $4, $5)",
             payload.id,
             payload.name,
             payload.icon_url,
-            payload.locale
+            payload.locale,
+            payload.voice_model,
         )
         .execute(pool)
         .await?;
@@ -68,11 +82,12 @@ impl UpdateModel for Guild {
         payload: Self::UpdateSchema,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
-            "UPDATE guild SET name = $2, icon_url = $3, locale = $4 WHERE id = $1",
+            "UPDATE guild SET name = $2, icon_url = $3, locale = $4, voice_model = $5WHERE id = $1",
             *id,
             payload.name,
             payload.icon_url,
-            payload.locale
+            payload.locale,
+            payload.voice_model,
         )
         .execute(pool)
         .await?;
@@ -115,6 +130,7 @@ mod tests {
                 name: "Test".to_string(),
                 icon_url: "http://example.com".to_string(),
                 locale: "en_US".to_string(),
+                voice_model: "a".to_string(),
             },
         )
         .await
@@ -131,6 +147,7 @@ mod tests {
                 name: "Piyo".to_string(),
                 icon_url: guild.icon_url,
                 locale: guild.locale,
+                voice_model: "a".to_string(),
             },
         )
         .await

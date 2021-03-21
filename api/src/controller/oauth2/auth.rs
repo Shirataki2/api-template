@@ -36,7 +36,10 @@ pub(crate) async fn auth(
 
     let token = match token {
         Ok(token) => token,
-        Err(_) => return Err(AppError::AuthorizationServerError),
+        Err(e) => {
+            error!("{:?}", e);
+            return Err(AppError::AuthorizationServerError)
+        },
     };
 
     if let Some(refresh_token) = token.refresh_token() {

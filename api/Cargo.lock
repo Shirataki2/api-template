@@ -494,6 +494,7 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "async-trait",
+ "chrono",
  "derive_builder",
  "dotenv",
  "serde",

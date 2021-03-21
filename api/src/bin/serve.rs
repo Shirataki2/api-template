@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate log;
 
-use actix_redis::SameSite;
 use actix_session::CookieSession;
 use actix_web::{middleware::Logger, App, HttpServer};
 use anyhow::Result;
@@ -65,10 +64,9 @@ async fn main() -> Result<()> {
             .wrap(Logger::default())
             .wrap(
                 CookieSession::signed(session_key.deref().as_bytes())
-                    .same_site(SameSite::Lax)
                     .http_only(true)
                     .secure(true)
-                    .domain(".chomama.jp"),
+                    .expires_in(60 * 60 * 24 * 14)
             )
             .configure(|c| set_routes(c, &redis_host))
     })
