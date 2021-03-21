@@ -9,11 +9,7 @@ use crate::{
     data::{DatabasePool, GcpAccessToken},
     tasks,
 };
-use api::{
-    guild::{Guild as GuildModel, GuildBuilder},
-    CreateModel,
-};
-use api_models::GetModel;
+use api_models::guild::Guild as GuildModel;
 use regex::Regex;
 use serenity::{
     async_trait,
@@ -86,29 +82,22 @@ impl EventHandler for Handler {
                 }
             }
         };
-        let payload = GuildBuilder::default()
-            .id(guild.id.0 as i64)
-            .name(guild.name.clone())
-            .icon_url(
+        if let Err(sqlx::Error::RowNotFound) = GuildModel::get(&pool, guild.id.0 as i64).await {
+            if let Err(e) = GuildModel::create(
+                &pool,
+                guild.id.0 as i64,
+                guild.name.clone(),
                 guild
                     .icon_url()
                     .unwrap_or("".to_string())
                     .replace(".webp", ".png"),
+                "ja-JP".to_string(),
+                "JP-Female-Normal-A".to_string(),
             )
-            .locale("ja-JP".to_string())
-            .voice_model("JP-Female-Normal-A".to_string())
-            .build();
-
-        let payload = match payload {
-            Ok(payload) => payload,
-            Err(e) => {
-                error!("Failed to build payload; {:#?}", e);
-                return;
+            .await
+            {
+                error!("Failed to insert guild: {:?}", e);
             }
-        };
-
-        if let Err(e) = GuildModel::checked_create(&pool, &(guild.id.0 as i64), payload).await {
-            error!("Failed to insert guild; {:#?}", e);
         }
     }
 
@@ -185,7 +174,7 @@ impl EventHandler for Handler {
             let token = token.lock().await;
             token.show()
         };
-        let model = match GuildModel::get(&pool, &(guild_id.0 as i64)).await {
+        let model = match GuildModel::get(&pool, guild_id.0 as i64).await {
             Ok(g) => match g.voice_model.as_str() {
                 "JP-Female-Normal-A" => TtsType::GcpJpFemaleNormalA(token),
                 "JP-Female-Normal-B" => TtsType::GcpJpFemaleNormalB(token),

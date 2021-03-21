@@ -1,6 +1,5 @@
 use super::operations::Response;
 use crate::{common::tt, data::DatabasePool};
-use api::GetModel;
 use api_models::guild::Guild;
 use serenity::model::{
     channel::GuildChannel, id::UserId, interactions::ApplicationCommandInteractionData,
@@ -23,14 +22,14 @@ pub async fn set_voice(
     };
     let guild_id = text_channel.guild_id.0 as i64;
 
-    Guild::set_voice(&pool, &guild_id, &opt).await?;
-    let locale = Guild::get(&pool, &guild_id).await?.locale;
+    let locale = Guild::get(&pool, guild_id).await?.locale;
 
     let resp = Response {
         message: format!("{} **{}**", tt(&locale, "UpdateVoiceModel"), &opt),
         embeds: vec![],
         ephemeral: false,
     };
+    Guild::set_voice_model(&pool, guild_id, opt).await?;
 
     Ok(Some(resp))
 }

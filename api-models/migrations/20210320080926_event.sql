@@ -4,7 +4,7 @@ CREATE TABLE events (
     guild_id BIGINT NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
-    notifications TEXT[] NOT NULL,
+    notifications TEXT NOT NULL,
     color TEXT NOT NULL DEFAULT '#0000ff',
     is_all_day BOOLEAN NOT NULL DEFAULT FALSE,
     start_at TIMESTAMP NOT NULL,

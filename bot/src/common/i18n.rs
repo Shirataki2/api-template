@@ -1,4 +1,4 @@
-use api_models::{guild::Guild, GetModel};
+use api_models::guild::Guild;
 use fluent_templates::{static_loader, Loader};
 use serenity::model::{channel::Message, id::GuildId};
 use sqlx::PgPool;
@@ -26,7 +26,7 @@ pub fn tt(lang: &str, lookup_id: &str) -> String {
 
 pub async fn get_locale(pool: &PgPool, msg: &Message) -> String {
     if let Some(GuildId(gid)) = msg.guild_id {
-        if let Ok(g) = Guild::get(pool, &(gid as i64)).await {
+        if let Ok(g) = Guild::get(pool, gid as i64).await {
             let locale = g.locale;
             return locale;
         }
@@ -36,7 +36,7 @@ pub async fn get_locale(pool: &PgPool, msg: &Message) -> String {
 
 pub async fn t(pool: &PgPool, msg: &Message, id: &str) -> String {
     if let Some(GuildId(gid)) = msg.guild_id {
-        if let Ok(g) = Guild::get(pool, &(gid as i64)).await {
+        if let Ok(g) = Guild::get(pool, gid as i64).await {
             let locale = g.locale;
             return tt(id, &locale);
         }

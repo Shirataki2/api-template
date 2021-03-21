@@ -21,12 +21,12 @@ pub async fn lang(
 
     let lang = extract_option(data, "lang").context("No option")?;
 
-    Guild::set_locale(&pool, &guild_id, &lang).await?;
-
     let resp = Response {
-        message: format!("Set Language to: {}", lang),
+        message: format!("Set Language to: {}", &lang),
         embeds: vec![],
         ephemeral: false,
     };
+    Guild::set_locale(&pool, guild_id, lang).await?;
+
     Ok(Some(resp))
 }

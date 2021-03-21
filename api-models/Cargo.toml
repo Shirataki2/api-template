@@ -24,3 +24,6 @@ features = [
     "postgres",
     "chrono",
 ]
+
+[dependencies.sqlx-helper]
+path = "../crates/sqlx-helper"
