@@ -1,12 +1,8 @@
-use std::{
-    iter,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use crate::{error::TtsError, TtsEngine};
 use async_trait::async_trait;
 use enum_product::enum_product;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::Client;
 use tokio::{
     fs,
@@ -99,14 +95,8 @@ impl TtsEngine for GcpTts {
 
         output_file.write_all(&buff).await?;
         output_file.flush().await?;
-        let mut rng = thread_rng();
-        let filename: String = iter::repeat(())
-            .map(|_| rng.sample(Alphanumeric))
-            .map(char::from)
-            .take(32)
-            .collect();
 
-        Ok(format!("{}.mp3", filename))
+        Ok(output_path)
     }
 }
 
