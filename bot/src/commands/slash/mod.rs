@@ -1,5 +1,6 @@
 pub mod lang;
 pub mod operations;
+pub mod set_voice;
 
 use self::operations::Operation;
 use anyhow::{bail, Context as _, Result};
@@ -22,6 +23,7 @@ pub async fn handle_slash_command(
 
         let op = match data.name.as_str() {
             "lang" => Operation::Lang,
+            "voice" => Operation::SetVoice,
             _ => bail!("unknown command"),
         };
 

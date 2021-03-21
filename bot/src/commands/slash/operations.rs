@@ -1,4 +1,4 @@
-use super::lang::lang;
+use super::{lang::lang, set_voice::set_voice};
 use serde_json::Value;
 use serenity::model::{
     channel::GuildChannel, id::UserId, interactions::ApplicationCommandInteractionData,
@@ -16,6 +16,7 @@ pub struct Response {
 
 pub enum Operation {
     Lang,
+    SetVoice,
 }
 
 impl Operation {
@@ -28,6 +29,7 @@ impl Operation {
     ) -> anyhow::Result<Option<Response>> {
         let out = match self {
             Operation::Lang => lang(ctx, data, user_id, text_channel).await?,
+            Operation::SetVoice => set_voice(ctx, data, user_id, text_channel).await?,
         };
         Ok(out)
     }

@@ -8,7 +8,7 @@ macro_rules! unwrap {
             Some(e) => e,
             None => continue,
         }
-    }
+    };
 }
 
 pub async fn renew_token(ctx: Arc<Context>) {
@@ -25,7 +25,7 @@ pub async fn renew_token(ctx: Arc<Context>) {
                     tokio::time::delay_for(Duration::from_secs(3)).await;
                 } else {
                     info!("New Token is: {:?}", token.show());
-                    break
+                    break;
                 }
                 error!("Renew token failed for 5 times")
             }
@@ -33,4 +33,3 @@ pub async fn renew_token(ctx: Arc<Context>) {
         }
     });
 }
-

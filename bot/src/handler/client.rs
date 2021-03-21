@@ -1,4 +1,4 @@
-use std::{fs, sync::Arc};
+use std::sync::Arc;
 
 use crate::{
     commands::slash,
@@ -13,6 +13,8 @@ use api::{
     guild::{Guild as GuildModel, GuildBuilder},
     CreateModel,
 };
+use api_models::GetModel;
+use regex::Regex;
 use serenity::{
     async_trait,
     client::{Context, EventHandler},
@@ -29,6 +31,7 @@ use songbird::{
     input::restartable::Restartable, Event, EventContext, EventHandler as VoiceEventHandler,
     TrackEvent,
 };
+use tokio::fs;
 use tts::TtsEngine;
 
 pub struct Handler {
@@ -93,6 +96,7 @@ impl EventHandler for Handler {
                     .replace(".webp", ".png"),
             )
             .locale("ja-JP".to_string())
+            .voice_model("JP-Female-Normal-A".to_string())
             .build();
 
         let payload = match payload {
@@ -114,6 +118,7 @@ impl EventHandler for Handler {
         // 2) [z.]から始まらない
         // 3) z.joinを送信したチャンネルである
         // 4) このBotがVCに入室している
+        // 5) </slash:interactid> ~~のメッセージは無視する
 
         // 1) & 2)
         if msg.author.bot || msg.content.starts_with("z.") {
@@ -137,7 +142,7 @@ impl EventHandler for Handler {
             return;
         }
 
-        // 4)
+        // 3)
         let guild = match msg.guild(&ctx.cache).await {
             Some(guild) => guild,
             None => return,
@@ -156,9 +161,21 @@ impl EventHandler for Handler {
             }
         }
 
+        // 5)
+        let re = Regex::new(r"^<.+?:\d{18,20}>").unwrap();
+
+        if re.is_match(&msg.content) {
+            return;
+        }
+
         let manager = match songbird::get(&ctx).await {
             Some(manager) => manager.clone(),
             None => return,
+        };
+
+        let pool = {
+            let data = ctx.data.as_ref().read().await;
+            data.get::<DatabasePool>().unwrap().clone()
         };
 
         // * TTS Start * //
@@ -168,23 +185,38 @@ impl EventHandler for Handler {
             let token = token.lock().await;
             token.show()
         };
-        let engine = create_tts_engine(TtsType::GcpJpFemaleNormalA(token))
-            .unwrap()
-            .ensure_gcp();
+        let model = match GuildModel::get(&pool, &(guild_id.0 as i64)).await {
+            Ok(g) => match g.voice_model.as_str() {
+                "JP-Female-Normal-A" => TtsType::GcpJpFemaleNormalA(token),
+                "JP-Female-Normal-B" => TtsType::GcpJpFemaleNormalB(token),
+                "JP-Female-Premium-A" => TtsType::GcpJpFemalePremiumA(token),
+                "JP-Female-Premium-B" => TtsType::GcpJpFemalePremiumB(token),
+                "JP-Male-Normal-A" => TtsType::GcpJpMaleNormalA(token),
+                "JP-Male-Normal-B" => TtsType::GcpJpMaleNormalB(token),
+                "JP-Male-Premium-A" => TtsType::GcpJpMalePremiumA(token),
+                "JP-Male-Premium-B" => TtsType::GcpJpMalePremiumB(token),
+                _ => return,
+            },
+            Err(e) => {
+                error!("{:?}", e);
+                return;
+            }
+        };
+        let engine = create_tts_engine(model).unwrap().ensure_gcp();
 
-        let path = match engine.save(&msg.content.replace("\n", "．")).await {
+        let path = dbg! {match engine.save(&msg.content.replace("\n", "．")).await {
             Ok(path) => path,
             Err(e) => {
                 error!("TTS save error: {:?}", e);
                 return;
             }
-        };
+        }};
 
         // * TTS End * //
 
         if let Some(handler) = manager.get(guild_id) {
             let mut handler = handler.lock().await;
-            let src = match Restartable::ffmpeg(path.clone(), true).await {
+            let src = match Restartable::ffmpeg(path.clone(), false).await {
                 Ok(src) => src,
                 Err(e) => {
                     error!("TTS convert error; {:?}", e);
@@ -205,7 +237,7 @@ struct FileRemover {
 #[async_trait]
 impl VoiceEventHandler for FileRemover {
     async fn act(&self, _ctx: &EventContext<'_>) -> Option<Event> {
-        let _ = fs::remove_file(&self.path);
+        let _ = fs::remove_file(&self.path).await;
         None
     }
 }

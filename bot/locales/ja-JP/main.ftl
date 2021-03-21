@@ -7,3 +7,11 @@ JoinFailed = Botをボイスチャンネルに入室させることに失敗し�
 Joined = ボイスチャンネルに参加しました
 LeaveFailed = ボイスチャンネルからの退出に失敗しました
 LeftVoiceChannel = ボイスチャンネルから退出しました
+
+ShutdownSuccess = **⚠️シャットダウンします**
+ShutdownFail = シャットダウンに失敗しました
+
+PingRetry = 平均Latency計測まで時間を要するため，期間をおいて再度お試しください．
+PingError = どういうわけかShardが見当たらないようです．
+
+UpdateVoiceModel = 音声モデルを変更しました: 

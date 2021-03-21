@@ -4,7 +4,11 @@ use serenity::{
     model::channel::Message,
 };
 
-use crate::{data::DatabasePool, reply, common::{tt, get_locale, redis::del}};
+use crate::{
+    common::{get_locale, redis::del, tt},
+    data::DatabasePool,
+    reply,
+};
 
 #[command]
 #[only_in(guilds)]
@@ -22,7 +26,7 @@ async fn leave(ctx: &Context, msg: &Message) -> CommandResult {
         Some(manager) => manager.clone(),
         None => {
             reply!((ctx, msg) => "{}", tt(&locale, "UnexpectedError"));
-            return Ok(())
+            return Ok(());
         }
     };
 

@@ -441,6 +441,7 @@ dependencies = [
  "log 0.4.14",
  "pretty_env_logger",
  "redis",
+ "regex",
  "serde",
  "serde_json",
  "serenity",
@@ -3260,6 +3261,8 @@ dependencies = [
  "serde_json",
  "tempfile",
  "thiserror",
+ "tokio",
+ "uuid",
  "yup-oauth2",
 ]
 
