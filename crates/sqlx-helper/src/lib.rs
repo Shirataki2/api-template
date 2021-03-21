@@ -62,31 +62,29 @@ pub fn get(ast: TokenStream) -> TokenStream {
         .collect::<Vec<_>>();
 
     let pk = match field.len() {
-        0 => abort!(fields.span(), "`#[get(pk)]` must be specified for the primary key"),
+        0 => abort!(
+            fields.span(),
+            "`#[get(pk)]` must be specified for the primary key"
+        ),
         1 => field[0].clone(),
-        _ => abort!(fields.span(), "`#[get(pk)]` can be used only once")
+        _ => abort!(fields.span(), "`#[get(pk)]` can be used only once"),
     };
     let (pk_ident, pk_ty) = (pk.ident.clone().unwrap(), pk.ty.clone());
-    let query = format!(
-        "SELECT * FROM {} WHERE {} = $1",
-        table_name,
-        pk_ident,
-    );
+    let query = format!("SELECT * FROM {} WHERE {} = $1", table_name, pk_ident,);
     let gen = quote! {
         impl #struct_ident {
-            pub async fn get(pool: & ::sqlx::PgPool, #pk_ident: #pk_ty) -> Result<(), ::sqlx::Error> {
-                ::sqlx::query_as!(
+            pub async fn get(pool: & ::sqlx::PgPool, #pk_ident: #pk_ty) -> Result<Self, ::sqlx::Error> {
+                let data = ::sqlx::query_as!(
                     Self,
                     #query,
                     #pk_ident,
                 )
                 .fetch_one(pool)
                 .await?;
-                Ok(())
+                Ok(data)
             }
         }
     };
-    eprintln!("{:?}", query);
     gen.into()
 }
 
@@ -165,7 +163,6 @@ pub fn create(ast: TokenStream) -> TokenStream {
             }
         }
     };
-    eprintln!("{:?}", query);
     gen.into()
 }
 
@@ -203,9 +200,12 @@ pub fn update(ast: TokenStream) -> TokenStream {
         .collect::<Vec<_>>();
 
     let pk = match field.len() {
-        0 => abort!(fields.span(), "`#[delete(pk)]` must be specified for the primary key"),
+        0 => abort!(
+            fields.span(),
+            "`#[delete(pk)]` must be specified for the primary key"
+        ),
         1 => field[0].clone(),
-        _ => abort!(fields.span(), "`#[delete(pk)]` can be used only once")
+        _ => abort!(fields.span(), "`#[delete(pk)]` can be used only once"),
     };
     let (pk_ident, pk_ty) = (pk.ident.clone().unwrap(), pk.ty.clone());
 
@@ -265,16 +265,21 @@ pub fn update(ast: TokenStream) -> TokenStream {
             }
         })
         .collect::<Vec<_>>();
-    let incremental = (2..=field_names.len()+1)
+    let incremental = (2..=field_names.len() + 1)
         .map(|i| format!("${}", i))
         .collect::<Vec<_>>();
     let query = format!(
         "UPDATE {} SET {} WHERE {} = $1",
         table_name,
-        field_names.iter().zip(incremental.iter()).map(|(f, i)| format!("{} = {}", f, i)).collect::<Vec<_>>().join(","),
+        field_names
+            .iter()
+            .zip(incremental.iter())
+            .map(|(f, i)| format!("{} = {}", f, i))
+            .collect::<Vec<_>>()
+            .join(","),
         &pk_ident
     );
-    
+
     let gen = quote! {
         impl #struct_ident {
             pub async fn update(pool: & ::sqlx::PgPool, #pk_ident: #pk_ty, #(#fn_args),*) -> Result<(), ::sqlx::Error> {
@@ -291,11 +296,9 @@ pub fn update(ast: TokenStream) -> TokenStream {
             #(#col_setter)*
         }
     };
-    eprintln!("{:?}", query);
-        
+
     gen.into()
 }
-
 
 #[proc_macro_derive(Delete, attributes(table, get))]
 #[proc_macro_error]
@@ -325,16 +328,15 @@ pub fn delete(ast: TokenStream) -> TokenStream {
         .collect::<Vec<_>>();
 
     let pk = match field.len() {
-        0 => abort!(fields.span(), "`#[delete(pk)]` must be specified for the primary key"),
+        0 => abort!(
+            fields.span(),
+            "`#[delete(pk)]` must be specified for the primary key"
+        ),
         1 => field[0].clone(),
-        _ => abort!(fields.span(), "`#[delete(pk)]` can be used only once")
+        _ => abort!(fields.span(), "`#[delete(pk)]` can be used only once"),
     };
     let (pk_ident, pk_ty) = (pk.ident.clone().unwrap(), pk.ty.clone());
-    let query = format!(
-        "DELETE FROM {} WHERE {} = $1",
-        table_name,
-        pk_ident,
-    );
+    let query = format!("DELETE FROM {} WHERE {} = $1", table_name, pk_ident,);
     let gen = quote! {
         impl #struct_ident {
             pub async fn delete(pool: & ::sqlx::PgPool, #pk_ident: #pk_ty) -> Result<(), ::sqlx::Error> {
@@ -348,6 +350,5 @@ pub fn delete(ast: TokenStream) -> TokenStream {
             }
         }
     };
-    eprintln!("{:?}", query);
     gen.into()
 }

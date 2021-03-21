@@ -21,4 +21,10 @@ features = ["full", "extra-traits"]
 
 [dependencies.sqlx]
 version = "0.3"
-features = ["macros", "postgres", "chrono"]
+default-features = false
+features = [
+    "macros",
+    "postgres",
+    "chrono",
+    "runtime-tokio",
+]
